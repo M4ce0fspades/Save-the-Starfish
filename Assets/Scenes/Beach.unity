@@ -53091,6 +53091,11 @@ Terrain:
   m_EnableHeightmapRayTracing: 1
   m_EnableTreesAndDetailsRayTracing: 0
   m_TreeMotionVectorModeOverride: 3
+--- !u!1 &1416432640 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4459864850190357393, guid: 6bacecc4f3df9584198879c73a6b6c36, type: 3}
+  m_PrefabInstance: {fileID: 2036467596}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1420850578
 GameObject:
   m_ObjectHideFlags: 0
@@ -56555,6 +56560,7 @@ MonoBehaviour:
   winText: {fileID: 438189446}
   pauseScreen: {fileID: 1137443439}
   timerController: {fileID: 628355477}
+  reticle: {fileID: 1416432640}
 --- !u!4 &1504840328
 Transform:
   m_ObjectHideFlags: 0

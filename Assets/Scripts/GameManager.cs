@@ -29,9 +29,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject winScreen;
     [SerializeField] private TextMeshProUGUI winText;
     private bool gameWon = false;
+    private bool gameLost = false;
     private bool isPaused = false;
     [SerializeField] private GameObject pauseScreen;
     [SerializeField] private TimerController timerController;
+    [SerializeField] private GameObject reticle;
     //[SerializeField] private GameObject failScreen;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -58,13 +60,15 @@ public class GameManager : MonoBehaviour
         {
             PauseControl();
         }
+        if (timerController.timeLeft <= 0 && !gameLost)
+        {
+            LoseGame();
+        }
     }
     private void PauseControl()
     {
         if (isPaused)
         {
-            timerController.StartTimer();
-            timerController.timeLeft--;
             pauseScreen.SetActive(false);
             Time.timeScale = 1.0f;
             gameIsActive = true;
@@ -73,7 +77,6 @@ public class GameManager : MonoBehaviour
         }
         else if (!isPaused && gameIsActive)
         {
-            timerController.StopTimer();
             pauseScreen.SetActive(true);
             Time.timeScale = 0f;
             gameIsActive = false;
@@ -83,7 +86,7 @@ public class GameManager : MonoBehaviour
     }
     private void SetPlayerActive(bool activate)
     {
-        
+            reticle.SetActive(activate);
             playerSettings.cameraCanMove = activate;
             playerSettings.playerCanMove = activate;
             playerSettings.lockCursor = activate;
@@ -118,6 +121,16 @@ public class GameManager : MonoBehaviour
             audioSourceMusic.Play();
             audioSourceAmbiance.Play();
         }
+    }
+    private void LoseGame()
+    {
+        timerController.StopTimer();
+        audioSourceMusic.Stop();
+        gameLost = true;
+        gameIsActive = false;
+        SetPlayerActive(false);
+        mainText.gameObject.SetActive(false);
+        Debug.Log("Add lose screen and sfx here, with a retry/restart button");
     }
     private void WinGame()
     {

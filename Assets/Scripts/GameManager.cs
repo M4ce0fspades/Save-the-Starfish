@@ -8,8 +8,9 @@ public class GameManager : MonoBehaviour
     [HideInInspector] public int starfishOnBeach=0;
     [HideInInspector] public int starfishInHand=0;
     [HideInInspector] public int starfishInWater=0;
-    [SerializeField] private TextMeshProUGUI mainText;
-    [HideInInspector] public float volumeSFX = .5f;
+    [SerializeField] private GameObject mainText;
+    [SerializeField] private TextMeshProUGUI starfishStats;
+    [HideInInspector] public float volumeSFX;
     [HideInInspector] public float volumeMusic;
     [SerializeField] private GameObject mainMenu;
     [SerializeField] private SpawnManager spawnManager;
@@ -30,6 +31,7 @@ public class GameManager : MonoBehaviour
     private bool gameWon = false;
     private bool isPaused = false;
     [SerializeField] private GameObject pauseScreen;
+    [SerializeField] private TimerController timerController;
     //[SerializeField] private GameObject failScreen;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -47,7 +49,7 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        mainText.text = "Starfish out of the water: " + starfishOnBeach +"\nStarfish in inventory: " + starfishInHand +"\nStarfish saved: "+ starfishInWater;
+        starfishStats.text = "Starfish out of the water: " + starfishOnBeach +"\nStarfish in inventory: " + starfishInHand +"\nStarfish saved: "+ starfishInWater;
         if (starfishInWater == spawnManager.totalSpawnCount && !gameWon)
         {
             WinGame();
@@ -61,6 +63,8 @@ public class GameManager : MonoBehaviour
     {
         if (isPaused)
         {
+            timerController.StartTimer();
+            timerController.timeLeft--;
             pauseScreen.SetActive(false);
             Time.timeScale = 1.0f;
             gameIsActive = true;
@@ -69,6 +73,7 @@ public class GameManager : MonoBehaviour
         }
         else if (!isPaused && gameIsActive)
         {
+            timerController.StopTimer();
             pauseScreen.SetActive(true);
             Time.timeScale = 0f;
             gameIsActive = false;
@@ -93,6 +98,7 @@ public class GameManager : MonoBehaviour
         SetPlayerActive(true);
         mainMenu.SetActive(false);
         mainText.gameObject.SetActive(true);
+        timerController.StartTimer();
     }
     public void SFXControlVolume()
     {
@@ -115,6 +121,8 @@ public class GameManager : MonoBehaviour
     }
     private void WinGame()
     {
+        timerController.StopTimer();
+        audioSourceMusic.Stop();
         gameWon = true;
         gameIsActive = false;
         SetPlayerActive(false);

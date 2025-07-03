@@ -4,12 +4,12 @@ using UnityEngine.UI;
 
 public class TimerController : MonoBehaviour
 {
-    [SerializeField] private int timeLimit = 300;
+    public int timeLimit = 250;
     private TextMeshProUGUI thisText;
     private bool timerRunning = false;
-    public int timeLeft = 999;
+    public int timeLeft;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Awake()
     {
         thisText = gameObject.GetComponent<TextMeshProUGUI>();
         timeLeft = timeLimit;

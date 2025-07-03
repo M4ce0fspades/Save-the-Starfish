@@ -24,10 +24,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AudioClip clipIntroMusic;
     [SerializeField] private AudioClip clipInGameMusic;
     [SerializeField] private AudioClip winSound;
+    [SerializeField] private AudioClip loseSound;
     private bool musicHasStarted = false;
     public bool gameIsActive = false;
     [SerializeField] private GameObject winScreen;
     [SerializeField] private TextMeshProUGUI winText;
+    [SerializeField] private GameObject loseScreen;
+    [SerializeField] private TextMeshProUGUI loseText;
     private bool gameWon = false;
     private bool gameLost = false;
     private bool isPaused = false;
@@ -43,6 +46,7 @@ public class GameManager : MonoBehaviour
         audioSourceMusic.volume = 0;
         audioSourceSFX.volume = 0;
         mainText.gameObject.SetActive(false);
+        loseScreen.SetActive(false);
         winScreen.SetActive(false);
         mainMenu.SetActive(true);
         SetPlayerActive(false);
@@ -52,7 +56,7 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         starfishStats.text = "Starfish out of the water: " + starfishOnBeach +"\nStarfish in inventory: " + starfishInHand +"\nStarfish saved: "+ starfishInWater;
-        if (starfishInWater == spawnManager.totalSpawnCount && !gameWon)
+        if (starfishInWater == spawnManager.totalSpawnCount && !gameWon && !gameLost)
         {
             WinGame();
         }
@@ -60,7 +64,7 @@ public class GameManager : MonoBehaviour
         {
             PauseControl();
         }
-        if (timerController.timeLeft <= 0 && !gameLost)
+        if (timerController.timeLeft <= 0 && !gameLost && !gameWon)
         {
             LoseGame();
         }
@@ -130,7 +134,9 @@ public class GameManager : MonoBehaviour
         gameIsActive = false;
         SetPlayerActive(false);
         mainText.gameObject.SetActive(false);
-        Debug.Log("Add lose screen and sfx here, with a retry/restart button");
+        loseScreen.SetActive(true);
+        loseText.text = "You ran out of time and " + (50 - starfishInWater).ToString() + " starfish died;\nbetter luck next time.";
+        audioSourceSFX.PlayOneShot(loseSound, volumeSFX);
     }
     private void WinGame()
     {
@@ -142,7 +148,7 @@ public class GameManager : MonoBehaviour
         audioSourceSFX.PlayOneShot(winSound, volumeSFX);
         mainText.gameObject.SetActive(false);
         winScreen.SetActive(true);
-        winText.text = "Congratulations! You successfully made\na difference for " + starfishInWater.ToString() + " starfish!";
+        winText.text = "Congratulations! You successfully made\na difference for " + starfishInWater.ToString() + " starfish in only\n" + (timerController.timeLimit - timerController.timeLeft).ToString() + " seconds!";
     }
     public void RestartGame()
     {

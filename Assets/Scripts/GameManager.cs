@@ -2,12 +2,17 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-//4 minutes for 50 starfish? maybe do more trial runs first
+using System.IO;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+
 public class GameManager : MonoBehaviour
 {
     [HideInInspector] public int starfishOnBeach=0;
     [HideInInspector] public int starfishInHand=0;
-    [HideInInspector] public int starfishInWater=0;
+    public int starfishInWater=0;
     [SerializeField] private GameObject mainText;
     [SerializeField] private TextMeshProUGUI starfishStats;
     [HideInInspector] public float volumeSFX;
@@ -37,14 +42,32 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject pauseScreen;
     [SerializeField] private TimerController timerController;
     [SerializeField] private GameObject reticle;
-    //[SerializeField] private GameObject failScreen;
+    [SerializeField] private GameObject scoresScreen;
+    [SerializeField] private TMP_InputField nameInput;
+    private bool saveThisSession;
+    private string playerName;
+    private int sessionNumber = 1;
+    private string[] arrayOfNames;
+    [SerializeField] private TextMeshProUGUI[] winScoreText = new TextMeshProUGUI[10];
+    [SerializeField] private TextMeshProUGUI[] timeScoreText = new TextMeshProUGUI[10];
+    
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+
+
+    private void Awake()
+    {
+        LoadSession();
+    }
     void Start()
     {
+        Debug.Log("path: " + Application.persistentDataPath + "/savefile.json");
         pauseScreen.SetActive(false);
         audioSourceSFX = GetComponent<AudioSource>();
         audioSourceMusic.volume = 0;
         audioSourceSFX.volume = 0;
+        scoresScreen.SetActive(false);
         mainText.gameObject.SetActive(false);
         loseScreen.SetActive(false);
         winScreen.SetActive(false);
@@ -55,6 +78,7 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        
         starfishStats.text = "Starfish out of the water: " + starfishOnBeach +"\nStarfish in inventory: " + starfishInHand +"\nStarfish saved: "+ starfishInWater;
         if (starfishInWater == spawnManager.totalSpawnCount && !gameWon && !gameLost)
         {
@@ -71,13 +95,20 @@ public class GameManager : MonoBehaviour
     }
     private void PauseControl()
     {
-        if (isPaused)
+        if (isPaused && !gameIsActive && !gameWon && !gameLost)
         {
             pauseScreen.SetActive(false);
             Time.timeScale = 1.0f;
             gameIsActive = true;
             isPaused = false;
             SetPlayerActive(true);
+        }
+        else if (isPaused && gameWon || gameLost)
+        {
+            pauseScreen.SetActive(false);
+            Time.timeScale = 1.0f;
+            isPaused = false;
+            SetPlayerActive(false);
         }
         else if (!isPaused && gameIsActive)
         {
@@ -106,6 +137,15 @@ public class GameManager : MonoBehaviour
         mainMenu.SetActive(false);
         mainText.gameObject.SetActive(true);
         timerController.StartTimer();
+        if (nameInput.text != "")
+        {
+            saveThisSession = true;
+            playerName = nameInput.text;
+        }
+        else
+        {
+            saveThisSession = false;
+        }
     }
     public void SFXControlVolume()
     {
@@ -126,6 +166,16 @@ public class GameManager : MonoBehaviour
             audioSourceAmbiance.Play();
         }
     }
+    public void ScoresButtonPress()
+    {
+        mainMenu.SetActive(false);
+        scoresScreen.SetActive(true);
+    }
+    public void BackButtonPress()
+    {
+        scoresScreen.SetActive(false);
+        mainMenu.SetActive(true);    
+    }
     private void LoseGame()
     {
         timerController.StopTimer();
@@ -140,6 +190,7 @@ public class GameManager : MonoBehaviour
     }
     private void WinGame()
     {
+        SaveSession();
         timerController.StopTimer();
         audioSourceMusic.Stop();
         gameWon = true;
@@ -154,4 +205,108 @@ public class GameManager : MonoBehaviour
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+
+    [System.Serializable]
+    class PlayerData
+    {
+        public string userName;
+        public int userScore;
+    }
+    class GameData
+    {
+        public int totalSessions;
+    }
+
+    public void SaveSession()
+    {
+        if (saveThisSession)
+        {
+            GameData mainData = new GameData();
+            mainData.totalSessions = sessionNumber;
+            string mainJsonData = JsonUtility.ToJson(mainData);
+            File.WriteAllText(Application.persistentDataPath + "/mainsaveinfo.json", mainJsonData);
+
+
+
+
+            Debug.Log("saved");
+            PlayerData data = new PlayerData();
+            data.userName = playerName;
+            data.userScore = timerController.timeLimit - timerController.timeLeft;
+            string jsonData = JsonUtility.ToJson(data);
+            File.WriteAllText(Application.persistentDataPath + "/savefile" + sessionNumber + ".json", jsonData);
+
+
+
+
+        }
+        else
+        {
+            Debug.Log("not saved");
+        }
+        
+    }
+    public void LoadSession()
+    {
+        string mainPath = Application.persistentDataPath + "/mainsaveinfo.json";
+        if (File.Exists(mainPath))
+        {
+            string mainJsonData = File.ReadAllText(mainPath);
+            GameData mainData = JsonUtility.FromJson<GameData>(mainJsonData);
+            sessionNumber = mainData.totalSessions + 1;
+            arrayOfNames = new string[mainData.totalSessions];
+            PlayerData[] dataArray = new PlayerData[mainData.totalSessions];
+            
+            for (int i = 0; i<mainData.totalSessions; i++)
+            {
+                string path = Application.persistentDataPath + "/savefile" + (i + 1) + ".json";
+                string json = File.ReadAllText(path);
+                dataArray[i] = JsonUtility.FromJson<PlayerData>(json);
+            }
+            for (int i = 0; i<dataArray.Length; i++) 
+            {
+                arrayOfNames[i] = dataArray[i].userName;
+                
+            }
+
+            Dictionary<string, int> counts = new Dictionary<string, int>();
+            foreach (string key in arrayOfNames)
+            {
+                if (counts.ContainsKey(key))
+                {
+                    counts[key]++;
+                }
+                else
+                {
+                    counts[key] = 1;
+                }
+            }
+            
+            List<KeyValuePair<string, int>> sortedWinHighScores = counts.OrderByDescending(pair => pair.Value).ToList();
+            foreach(var entry in sortedWinHighScores)
+            {
+                Debug.Log("Name: " + entry.Key + " Wins: " + entry.Value);
+            }
+            for (int i = 0; i < sortedWinHighScores.Count && i <10; i++)
+            {
+                winScoreText[i].text = (i+1) + ". " + sortedWinHighScores[i].Key + ": " + sortedWinHighScores[i].Value;
+            }
+            
+
+
+
+
+
+        }
+
+        /*string path = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            PlayerData data = JsonUtility.FromJson<PlayerData>(json);
+            nameInput.text = data.userName;
+            Debug.Log(data);
+        }*/
+    }
+
 }

@@ -62,7 +62,6 @@ public class GameManager : MonoBehaviour
     }
     void Start()
     {
-        Debug.Log("path: " + Application.persistentDataPath + "/savefile.json");
         pauseScreen.SetActive(false);
         audioSourceSFX = GetComponent<AudioSource>();
         audioSourceMusic.volume = 0;
@@ -73,6 +72,22 @@ public class GameManager : MonoBehaviour
         winScreen.SetActive(false);
         mainMenu.SetActive(true);
         SetPlayerActive(false);
+        audioSourceSFX.volume = VolumeManager.Instance.sfxVolume;
+        audioSourceMusic.volume = VolumeManager.Instance.musicVolume;
+        audioSourceAmbiance.volume = VolumeManager.Instance.musicVolume;
+        musicSlider.value = audioSourceMusic.volume;
+        sfxSlider.value = audioSourceSFX.volume;
+        if (VolumeManager.Instance.musicVolume != 0)
+        {
+            audioSourceMusic.clip = clipIntroMusic;
+            musicHasStarted = true;
+            audioSourceMusic.Play();
+            audioSourceAmbiance.Play();
+            Debug.Log("music played");
+        }
+        Debug.Log(VolumeManager.Instance.sfxVolume);
+        Debug.Log(VolumeManager.Instance.musicVolume);
+        Debug.Log(audioSourceMusic.volume);
     }
 
     // Update is called once per frame
@@ -151,6 +166,7 @@ public class GameManager : MonoBehaviour
     {
         volumeSFX = sfxSlider.value;
         audioSourceSFX.volume = volumeSFX;
+        VolumeManager.Instance.sfxVolume = volumeSFX;
         audioSourceSFX.PlayOneShot(clipSFX, volumeSFX);
     }
     public void MusicControlVolume()
@@ -158,6 +174,7 @@ public class GameManager : MonoBehaviour
         volumeMusic = musicSlider.value;
         audioSourceMusic.volume = volumeMusic;
         audioSourceAmbiance.volume = volumeMusic;
+        VolumeManager.Instance.musicVolume = volumeMusic;
         if (!musicHasStarted)
         {
             audioSourceMusic.clip = clipIntroMusic;
@@ -229,7 +246,7 @@ public class GameManager : MonoBehaviour
 
 
 
-            Debug.Log("saved");
+            
             PlayerData data = new PlayerData();
             data.userName = playerName;
             data.userScore = timerController.timeLimit - timerController.timeLeft;
@@ -239,10 +256,6 @@ public class GameManager : MonoBehaviour
 
 
 
-        }
-        else
-        {
-            Debug.Log("not saved");
         }
         
     }
@@ -285,28 +298,24 @@ public class GameManager : MonoBehaviour
             List<KeyValuePair<string, int>> sortedWinHighScores = counts.OrderByDescending(pair => pair.Value).ToList();
             foreach(var entry in sortedWinHighScores)
             {
-                Debug.Log("Name: " + entry.Key + " Wins: " + entry.Value);
+                
             }
-            for (int i = 0; i < sortedWinHighScores.Count && i <10; i++)
+            for (int i = 0; i < sortedWinHighScores.Count && i < 10; i++)
             {
                 winScoreText[i].text = (i+1) + ". " + sortedWinHighScores[i].Key + ": " + sortedWinHighScores[i].Value;
             }
-            
-
+            PlayerData[] sortedTimeHighScores = dataArray.OrderBy(obj => obj.userScore).ToArray();
+            for (int i = 0; i < sortedTimeHighScores.Length && i < 10; i++)
+            {
+                timeScoreText[i].text = (i + 1) + ". " + sortedTimeHighScores[i].userName + ": " + sortedTimeHighScores[i].userScore + "s";
+            }
 
 
 
 
         }
 
-        /*string path = Application.persistentDataPath + "/savefile.json";
-        if (File.Exists(path))
-        {
-            string json = File.ReadAllText(path);
-            PlayerData data = JsonUtility.FromJson<PlayerData>(json);
-            nameInput.text = data.userName;
-            Debug.Log(data);
-        }*/
+        
     }
 
 }
